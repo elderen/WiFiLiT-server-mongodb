@@ -16,4 +16,24 @@ let chatSchema = new mongoose.Schema(
 mongoose.connect(url, { useNewUrlParser: true });
 console.log(`<#------ Connecting To ${url}...`)
 
-module.exports.Chat = mongoose.model('Chat', chatSchema, 'lobby');
+const Chat = mongoose.model('Chat', chatSchema, 'lobby');
+
+module.exports = {
+  add: (incoming) => {
+    return Chat.create(
+      {
+        user: incoming.user,
+        message: incoming.message
+      })
+  },
+
+  find: () => {
+    return Chat.find()
+                .skip(Chat.count() - 100)
+                .exec()
+  },
+
+  deleteAll: () => {
+    return Chat.deleteMany({});
+  }
+}
