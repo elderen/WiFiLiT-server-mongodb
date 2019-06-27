@@ -1,14 +1,19 @@
-const path = require('path');
-const Database = require('better-sqlite3');
+const mongoose = require("mongoose");
+mongoose.Promise = require("bluebird");
+const url = "mongodb://localhost:27017/wifilit";
 
-// Sqlite database connection and establish table
-const db = new Database(path.join(__dirname, 'wifichat.db'));
-db.prepare("CREATE TABLE IF NOT EXISTS wc (room TEXT, user TEXT, message TEXT, time DATETIME DEFAULT CURRENT_TIMESTAMP)").run();
+let chatSchema = new mongoose.Schema(
+  {
+    user: String,
+    message: String
+  },
+  {
+    timestamps: { createdAt: 'created', updatedAt: false },
+    versionKey: false
+  }
+);
 
-// Insert method. Use .run(room, user, message)
-const insert = db.prepare("INSERT INTO wc(room, user, message) VALUES(?,?,?)");
+mongoose.connect(url, { useNewUrlParser: true });
+console.log(`<#------ Connecting To ${url}...`)
 
-// Retrieve method. Use .all(room) to retrieve all messages from that room
-const retrieve = db.prepare("SELECT * FROM (SELECT * FROM wc WHERE room = ? ORDER BY time DESC limit 200) ORDER BY time ASC");
-
-module.exports = {insert, retrieve};
+module.exports.Chat = mongoose.model('Chat', chatSchema, 'lobby');

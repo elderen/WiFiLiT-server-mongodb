@@ -19,11 +19,12 @@
   },
   "homepage": "https://github.com/elderen/WiFiLit-server-mongodb#readme",
   "dependencies": {
+    "bluebird": "^3.5.5",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongoose": "^5.6.1",
-    "path": "^0.12.7",
     "nodemon": "^1.19.1",
+    "path": "^0.12.7",
     "socket.io": "^2.2.0"
   }
 }
