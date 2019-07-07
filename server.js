@@ -19,13 +19,18 @@ io.on('connection', (socket) => {
   socket.on('message', (newLog) => {
     console.log('new-------> ', newLog)
     mongoDb.add(newLog)
-    emit(socket)
+      .then(() => {
+        emit(socket)
+      })
   });
 })
 
-var emit =  (socket) => {
-  let logs =  retrieve.all('lobby');
-  io.emit('update', logs)
+var emit = (socket) => {
+  mongoDb.find()
+    .then((logs) => {
+      
+      io.emit('update', logs)
+    })
 }
 
 // Server
