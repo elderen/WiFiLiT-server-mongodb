@@ -16,26 +16,29 @@ io.on('connection', (socket) => {
   console.log('Current Socket Id: ', socket.id);
   console.log('# of Sockets Connected: ', Object.keys(io.sockets.sockets).length);
   console.log('Sockets: ', Object.keys(io.sockets.sockets));
+  
+  socket.on('ssid', (ssidName) => {
+    console.log('CLIENT SSID: ', ssidName)
+    socket.join(ssidName);
+    emit(ssidName)
+  })
+  
 
-  emit(socket)
-  socket.on('message', (newLog) => {
-    console.log('new-------> ', newLog)
+  socket.on('message', (newLog, ss) => {
+    console.log('new-------> ', newLog, ss)
     mongoDb.add(newLog)
       .then(() => {
-        emit(socket)
+        emit(ss)
       })
   });
 
-  socket.on('ssid', (ssidName) => {
-    console.log('CLIENT SSID: ', ssidName)
-  })
+  
 })
 
-var emit = (socket) => {
+var emit = (room) => {
   mongoDb.find()
     .then((logs) => {
-
-      io.emit('update', logs)
+      io.to(room).emit('update', logs)
     })
 }
 
