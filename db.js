@@ -5,6 +5,7 @@ const url = "mongodb://localhost:27017/wifilit";
 let chatSchema = new mongoose.Schema(
   {
     user: String,
+    room: String,
     message: String
   },
   {
@@ -23,12 +24,13 @@ module.exports = {
     return Chat.create(
       {
         user: incoming.user,
+        room: incoming.room,
         message: incoming.message
       })
   },
 
-  find: () => {
-    return Chat.find()
+  find: (ssid) => {
+    return Chat.find({room: ssid})
                 .skip(Chat.count() - 100)
                 .exec()
   },

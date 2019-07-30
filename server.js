@@ -23,7 +23,6 @@ io.on('connection', (socket) => {
     emit(ssidName)
   })
   
-
   socket.on('message', (newLog, ss) => {
     console.log('new-------> ', newLog, ss)
     mongoDb.add(newLog)
@@ -31,12 +30,10 @@ io.on('connection', (socket) => {
         emit(ss)
       })
   });
-
-  
 })
 
 var emit = (room) => {
-  mongoDb.find()
+  mongoDb.find(room)
     .then((logs) => {
       io.to(room).emit('update', logs)
     })
