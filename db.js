@@ -15,7 +15,7 @@ let chatSchema = new mongoose.Schema(
 );
 
 mongoose.connect(url, { useNewUrlParser: true });
-console.log(`<#------ Connecting To ${url}...`)
+console.log(`<#------ Connecting To ${url} collection 'lobby'...`)
 
 const Chat = mongoose.model('Chat', chatSchema, 'lobby');
 
