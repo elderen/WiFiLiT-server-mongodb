@@ -1,13 +1,48 @@
+const parser = require('body-parser');
 const cors = require('cors');
-const port = process.env.PORT || 3000;
+const AWS = require('aws-sdk');
+const fs = require('fs');
+const path = require('path');
 
 // MongoDb
 const mongoDb = require('./db.js');
 const authDb = require('./authentication.js')
 
+//configuring the AWS environment
+const Key = require('./KEY.json')
+AWS.config.update({
+  accessKeyId: Key.Access_ID,
+  secretAccessKey: Key.Access_Key
+});
+
+var s3 = new AWS.S3();
+//custom made function to store photo to s3
+let storePhoto = async (userPhotoPath, callback) => {
+  //configuring parameters
+  var params = {
+    Bucket: 'wifilit',
+    Body: fs.createReadStream(userPhotoPath),
+    Key: "userPhotos/" + path.basename(userPhotoPath)
+  };
+
+  //uploading to s3 bucket
+  await s3.upload(params, function (err, data) {
+    //handle error
+    if (err) {
+      console.log("Error storing to S3 Bucket => ", err);
+    }
+    //success
+    if (data) {
+      console.log("Uploaded in:", data.Location);
+    }
+    callback();
+  });
+}
+
 // Websocket | HTTP | express
 const app = require('express')();
 app.use(cors());
+app.use(parser.json());
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
@@ -61,8 +96,6 @@ io.on('connection', (socket) => {
           }
         }
       })
-
-    // io.to(`${socket.id}`).emit('uniqueId', '#id');
   })
 
   socket.on('ssid', (ssidName) => {
@@ -78,6 +111,30 @@ io.on('connection', (socket) => {
         emit(ss)
       })
   });
+
+  socket.on('postPhoto', (source) => {
+    let localPath = `./data/${source.username}`
+    // writing file to local file
+    fs.writeFile(localPath, source.uri, function (err) {
+      if (err) {
+        return console.log('Error downloading photo => ', err);
+      } else {
+        console.log(`User ${source.username}'s photo was saved!`);
+        //dump to S3 bucket
+        storePhoto(localPath, () => {
+          fs.unlink(localPath, (err) => {
+            if (err) {
+              console.log("failed to delete local image:" + err);
+            } else {
+              console.log('successfully deleted local image');
+            }
+          });
+        })
+      }
+    });
+  })
+
+
 })
 
 var emit = (room) => {
@@ -88,6 +145,7 @@ var emit = (room) => {
 }
 
 // Server
+const port = process.env.PORT || 3000;
 server.listen(port, () => {
   // console.log(`Listening on port ${port}... ------>`);
 })
