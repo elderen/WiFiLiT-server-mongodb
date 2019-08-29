@@ -146,7 +146,7 @@ io.on('connection', (socket) => {
             if (err) {
               console.log("failed to delete local image:" + err);
             } else {
-              console.log('successfully deleted local image');
+              console.log('successfully deleted local image from /data');
             }
           });
         })
@@ -161,9 +161,10 @@ io.on('connection', (socket) => {
       } else {
         retrievePhoto(user, (successful) => {
           if (successful) {
-            console.log(`./s3/${user}`)
+            // console.log(`./s3/${user}`)
             fs.readFile(`./s3/${user}`, "utf8", (err, data) => {
-              io.to(`${socket.id}`).emit('retrievePhoto', data)
+              if (err) console.log('Cant read the file from S3 bucket', err)
+              else io.to(`${socket.id}`).emit('retrievePhoto', data)
             })
           } else {
             io.to(`${socket.id}`).emit('retrievePhoto', false)
@@ -182,6 +183,28 @@ var emit = (room) => {
       io.to(room).emit('update', logs)
     })
 }
+
+// every minute it deletes a file thats 10+ minutes old
+const deleteS3OverTime = (uploadsDir) => {
+  fs.readdir(uploadsDir, function (err, files) {
+    files.forEach(function (file, index) {
+      fs.stat(path.join(uploadsDir, file), function (err, stat) {
+        var endTime, now;
+        if (err) {
+          return console.error(err);
+        }
+        now = new Date().getTime();
+        endTime = new Date(stat.ctime).getTime() + 600000;
+        if (now > endTime) {
+          console.log(`Successfully deleted ${file} from s3 folder`)
+          return fs.unlinkSync(path.join(uploadsDir, file))
+        }
+      });
+    });
+  });
+}
+const uploadsDir = __dirname + '/s3';
+setInterval(() => { deleteS3OverTime(uploadsDir) }, 60000)
 
 // Server
 const port = process.env.PORT || 3000;
