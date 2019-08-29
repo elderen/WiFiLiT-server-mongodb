@@ -1,4 +1,4 @@
 node_modules
-data/
-s3/
+data/*
+s3/*
 KEY.json

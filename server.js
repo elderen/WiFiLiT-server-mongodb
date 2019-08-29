@@ -132,7 +132,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('postPhoto', (source) => {
-    console.log('source: ', typeof source)
+    // console.log('source: ', typeof source)
     let localPath = `./data/${source.username}`
     // writing file to local file
     fs.writeFile(localPath, JSON.stringify(source), function (err) {
