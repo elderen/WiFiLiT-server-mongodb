@@ -17,9 +17,9 @@ AWS.config.update({
 
 var s3 = new AWS.S3();
 //custom made function to store photo to s3
-let storePhoto = async (userPhotoPath, callback) => {
+const storePhoto = async (userPhotoPath, callback) => {
   //configuring parameters
-  var params = {
+  let params = {
     Bucket: 'wifilit',
     Body: fs.createReadStream(userPhotoPath),
     Key: "userPhotos/" + path.basename(userPhotoPath)
@@ -37,6 +37,25 @@ let storePhoto = async (userPhotoPath, callback) => {
     }
     callback();
   });
+}
+
+const retrievePhoto = async (user, callback) => {
+  let localFile = `./s3/${user}`
+  let params = {
+    Bucket: 'wifilit',
+    Key: "userPhotos/" + path.basename(user)
+  };
+  await s3.getObject(params, (err, data) => {
+    if (err) {
+      console.error("User photo not found in S3 Bucket", err);
+      callback(false)
+    } else {
+      fs.writeFile(localFile, data.Body.toString(), () => {
+        console.log(`${localFile} has been created!`);
+        callback(true)
+      })
+    }
+  })
 }
 
 // Websocket | HTTP | express
@@ -113,9 +132,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('postPhoto', (source) => {
+    console.log('source: ', typeof source)
     let localPath = `./data/${source.username}`
     // writing file to local file
-    fs.writeFile(localPath, source.uri, function (err) {
+    fs.writeFile(localPath, JSON.stringify(source), function (err) {
       if (err) {
         return console.log('Error downloading photo => ', err);
       } else {
@@ -134,6 +154,25 @@ io.on('connection', (socket) => {
     });
   })
 
+  socket.on('retrievePhoto', (user) => {
+    fs.readFile(`./s3/${user}`, "utf8", (err, data) => {
+      if (data) {
+        io.to(`${socket.id}`).emit('retrievePhoto', data)
+      } else {
+        retrievePhoto(user, (successful) => {
+          if (successful) {
+            console.log(`./s3/${user}`)
+            fs.readFile(`./s3/${user}`, "utf8", (err, data) => {
+              io.to(`${socket.id}`).emit('retrievePhoto', data)
+            })
+          } else {
+            io.to(`${socket.id}`).emit('retrievePhoto', false)
+          }
+        })
+      }
+    })
+
+  })
 
 })
 
