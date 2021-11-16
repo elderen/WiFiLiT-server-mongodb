@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/elderen/WiFiLit-server-mongodb#readme",
   "dependencies": {
-    "aws-sdk": "^2.519.0",
+    "aws-sdk": "^2.814.0",
     "bluebird": "^3.5.5",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
